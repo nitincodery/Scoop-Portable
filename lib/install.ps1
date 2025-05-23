@@ -1032,6 +1032,7 @@ function persist_data($manifest, $original_dir, $persist_dir) {
             if (Test-Path $target) {
                 # if there is also a source data, rename it (to keep a original backup)
                 if (Test-Path $source) {
+                    Write-Host "Backing up existing source: $source.original"
                     Move-Item -Force $source "$source.original"
                 }
                 # we don't have persist data in the store, move the source to target, then create link
@@ -1048,14 +1049,16 @@ function persist_data($manifest, $original_dir, $persist_dir) {
                 ensure $target | Out-Null
             }
 
-            # create link
-            if (is_directory $target) {
-                # target is a directory, create junction
-                New-DirectoryJunction $source $target | Out-Null
-                attrib $source +R /L
-            } else {
-                # target is a file, create hard link
-                New-Item -Path $source -ItemType HardLink -Value $target | Out-Null
+            # On FAT32 or NO_JUNCTION: copy instead of linking
+            Write-Host "Copying persisted data from $target to $source"
+            if (Test-Path $target) {
+                if (is_directory $target) {
+		    # target is a directory
+                    Copy-Item $target $source -Recurse -Force
+                } else {
+                    # target is a file
+                    Copy-Item $target $source -Force
+                }
             }
         }
     }
@@ -1063,23 +1066,18 @@ function persist_data($manifest, $original_dir, $persist_dir) {
 
 function unlink_persist_data($manifest, $dir) {
     $persist = $manifest.persist
-    # unlink all junction / hard link in the directory
     if ($persist) {
-        @($persist) | ForEach-Object {
+        if ($persist -is [String]) {
+            $persist = @($persist)
+        }
+
+        $persist | ForEach-Object {
             $source, $null = persist_def $_
-            $source = Get-Item "$dir\$source" -ErrorAction SilentlyContinue
-            if ($source.LinkType) {
-                $source_path = $source.FullName
-                # directory (junction)
-                if ($source -is [System.IO.DirectoryInfo]) {
-                    # remove read-only attribute on the link
-                    attrib -R /L $source_path
-                    # remove the junction
-                    Remove-Item -Path $source_path -Recurse -Force -ErrorAction SilentlyContinue
-                } else {
-                    # remove the hard link
-                    Remove-Item -Path $source_path -Force -ErrorAction SilentlyContinue
-                }
+            $source_path = Join-Path $dir $source
+
+            if (Test-Path $source_path) {
+                Write-Host "Persisted data exists at: $source_path (not deleting on FAT32)"
+                # Do NOT delete the data — just log it
             }
         }
     }
