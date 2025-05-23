@@ -20,13 +20,14 @@ function create_startmenu_shortcuts($manifest, $dir, $global, $arch) {
 }
 
 function shortcut_folder($global) {
-    if ($global) {
-        $startmenu = 'CommonStartMenu'
-    } else {
-        $startmenu = 'StartMenu'
+    $scoopDir = $env:SCOOP
+    if (-not $scoopDir) {
+        throw "SCOOP environment variable not set"
     }
-    return Convert-Path (ensure ([System.IO.Path]::Combine([Environment]::GetFolderPath($startmenu), 'Programs', 'Scoop Apps')))
+    $shortcutsDir = [System.IO.Path]::Combine($scoopDir, 'shortcuts')
+    return Convert-Path (ensure $shortcutsDir)
 }
+
 
 function startmenu_shortcut([System.IO.FileInfo] $target, $shortcutName, $arguments, [System.IO.FileInfo]$icon, $global) {
     if (!$target.Exists) {
