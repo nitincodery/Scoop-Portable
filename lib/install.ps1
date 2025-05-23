@@ -1023,42 +1023,28 @@ function persist_data($manifest, $original_dir, $persist_dir) {
 
             Write-Host "Persisting $source"
 
-            $source = $source.TrimEnd('/').TrimEnd('\\')
+            $source = $source.TrimEnd('/').TrimEnd('\')
 
             $source = "$dir\$source"
             $target = "$persist_dir\$target"
 
-            # if we have had persist data in the store, just create link and go
+            # If we already have data in persist storage, back up source if it exists, then create link or whatever
             if (Test-Path $target) {
-                # if there is also a source data, rename it (to keep a original backup)
                 if (Test-Path $source) {
                     Write-Host "Backing up existing source: $source.original"
                     Move-Item -Force $source "$source.original"
                 }
-                # we don't have persist data in the store, move the source to target, then create link
-            } elseif (Test-Path $source) {
-                # ensure target parent folder exist
+                # NO copying from $target to $source here anymore
+            }
+            # If persist data doesn't exist but source does, move source to persist (same as before)
+            elseif (Test-Path $source) {
                 ensure (Split-Path -Path $target) | Out-Null
                 Move-Item $source $target
-                # we don't have neither source nor target data! we need to create an empty target,
-                # but we can't make a judgement that the data should be a file or directory...
-                # so we create a directory by default. to avoid this, use pre_install
-                # to create the source file before persisting (DON'T use post_install)
-            } else {
+            }
+            # If neither exists, create empty directory in persist
+            else {
                 $target = New-Object System.IO.DirectoryInfo($target)
                 ensure $target | Out-Null
-            }
-
-            # On FAT32 or NO_JUNCTION: copy instead of linking
-            Write-Host "Copying persisted data from $target to $source"
-            if (Test-Path $target) {
-                if (is_directory $target) {
-		    # target is a directory
-                    Copy-Item $target $source -Recurse -Force
-                } else {
-                    # target is a file
-                    Copy-Item $target $source -Force
-                }
             }
         }
     }
