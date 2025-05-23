@@ -57,6 +57,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     ensure_install_dir_not_in_path $dir $global
     $dir = link_current $dir
     create_shims $manifest $dir $global $architecture
+    # TODO: Fix it with installing local shortcuts
     # create_startmenu_shortcuts $manifest $dir $global $architecture
     install_psmodule $manifest $dir $global
     env_add_path $manifest $dir $global $architecture
@@ -893,7 +894,7 @@ function env_rm_path($manifest, $dir, $global, $arch) {
     $dir = $dir.TrimEnd('\')
     if ($env_add_path) {
         $path = $env_add_path.Where({ $_ }).ForEach({ Join-Path $dir $_ | Get-AbsolutePath }).Where({ is_in_dir $dir $_ })
-        Remove-Path -Path $path -Global:$global # TODO: Remove after forced isolating Scoop path
+        Remove-Path -Path $path -Global:$global
         Remove-Path -Path $path -TargetEnvVar $scoopPathEnvVar -Global:$global
     }
 }

@@ -160,7 +160,6 @@ function Expand-ZstdArchive {
         [Switch]
         $Removal
     )
-    # TODO: Remove this function after 2024/12/31
     Show-DeprecatedWarning $MyInvocation 'Expand-7zipArchive'
     Expand-7zipArchive -Path $Path -DestinationPath $DestinationPath -ExtractDir $ExtractDir -Switches $Switches -Removal:$Removal
 }

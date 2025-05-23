@@ -1424,8 +1424,11 @@ function Out-UTF8File {
 Optimize-SecurityProtocol
 
 # Load Scoop config
-$configHome = $env:XDG_CONFIG_HOME, "$env:USERPROFILE\.config" | Select-Object -First 1
-$configFile = "$configHome\scoop\config.json"
+if ($env:SCOOP_CONFIG) {
+    $configFile = $env:SCOOP_CONFIG
+} else {
+    $configFile = Join-Path $env:SCOOP 'config\config.json'
+}
 # Check if it's the expected install path for scoop: <root>/apps/scoop/current
 $coreRoot = Split-Path $PSScriptRoot
 $pathExpected = ($coreRoot -replace '\\','/') -like '*apps/scoop/current*'
