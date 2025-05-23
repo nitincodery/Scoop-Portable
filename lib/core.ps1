@@ -1,3 +1,5 @@
+. "$PSScriptRoot\versions.ps1"
+
 function Get-PESubsystem($filePath) {
     try {
         $fileStream = [System.IO.FileStream]::new($filePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
